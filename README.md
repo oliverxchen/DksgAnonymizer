@@ -18,4 +18,4 @@ This is currently written in C#/Mono, but it probably makes sense to port this t
 It would be possible to generalize this to multiple linked fields, multiple files, etc. Ages/birth dates could be rounded, postal codes approximated, etc. Anonymizing within a field would also be possible, but more difficult. For example, anonymizing names within free text would require a list of names that needed to be anonymized. But it would be extremely rare that this would be needed.
 
 ## Extremely brief guide to the code
-The Anonymizer.cs file is the main class.
+The Anonymizer.cs file is the central class...
