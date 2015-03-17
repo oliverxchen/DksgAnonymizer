@@ -59,7 +59,7 @@ public partial class MainWindow: Gtk.Window
 		}
 
 		var anon = new Anonymizer ();
-		anon.write (input_files, email_cols, seed);
+		anon.write_from_files (input_files, email_cols, seed);
 
 		sw.Stop ();
 		labelStatus.LabelProp = "Finished anonymizing in: " + sw.ElapsedMilliseconds.ToString() + "ms.";

@@ -4,10 +4,15 @@
 public partial class MainWindow
 {
 	private global::Gtk.Table table1;
+	
 	private global::Gtk.Button buttonAnonymize;
+	
 	private global::Gtk.Button buttonGenerateTestInputFiles;
+	
 	private global::Gtk.Entry entrySeed;
+	
 	private global::Gtk.Label label1;
+	
 	private global::Gtk.Label labelStatus;
 
 	protected virtual void Build ()

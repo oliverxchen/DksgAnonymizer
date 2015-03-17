@@ -10,6 +10,7 @@ namespace DksgAnonymizer
 		Dictionary<string, int> map;
 		private int[] rand_perm;
 		private int index;
+		private int n_rows;
 		private const string delimiter = ",";
 		private const char delimiter_char = ',';
 		private const int batch_size = 1000;
@@ -26,9 +27,9 @@ namespace DksgAnonymizer
 		/// <param name="input_file_names">File names.</param>
 		/// <param name="linked_cols">Linked columns.</param>
 		/// <param name="seed">Seed.</param>
-		public void write(string[] input_file_names, int[] linked_cols, int seed)
+		public void write_from_files(string[] input_file_names, int[] linked_cols, int seed)
 		{
-			int n_rows = 0;
+			n_rows = 0;
 			int n_files = input_file_names.Length;
 
 			for (int i = 0; i < n_files; i++) {
@@ -39,10 +40,28 @@ namespace DksgAnonymizer
 			rand_perm = ks.get_random_permutation (n_rows, seed);
 
 			for (int i = 0; i < n_files; i++) {
-				write_anonymized_file (input_file_names [i], linked_cols [i]);
+				TextReader tr = new StreamReader (input_file_names [i]);
+				write_anonymized_file (tr, input_file_names [i], linked_cols [i]);
+				tr.Close ();
 			}
 
 			write_map ("anonymizing_map.csv");
+		}
+
+		/// <summary>
+		/// Write the anonymized files and mapping from original data from the standard input.
+		/// </summary> 
+		/// <param name="linked_col">Linked columns in each line of the standard input</param>
+		/// <param name="seed">Seed.</param>
+		public void write_from_console(int linked_col, int seed) {
+			// We don't know the number of rows in advance. Take 10M and throw error if there are more incoming lines then this.
+			n_rows = 10000000;
+			var ks = new KnuthShuffle ();
+			rand_perm = ks.get_random_permutation (n_rows, seed);
+			FileStream console_stream = (FileStream) Console.OpenStandardInput();
+			TextReader tr = new StreamReader(console_stream);
+			write_anonymized_file (tr, "generated.csv", linked_col);
+			tr.Close ();
 		}
 
 
@@ -68,11 +87,10 @@ namespace DksgAnonymizer
 		/// </summary>
 		/// <param name="file_name">File_name.</param>
 		/// <param name="linked_col">Linked_col.</param>
-		private void write_anonymized_file(string file_name, int linked_col)
+		private void write_anonymized_file(TextReader tr, string file_name, int linked_col)
 		{
 			string output_file_name = file_name.Substring(0, file_name.LastIndexOf(".")) + "_anon.csv";
 
-			using (TextReader tr = new StreamReader (file_name))
 			using (TextWriter tw = new StreamWriter (output_file_name))
 			{
 				string line = tr.ReadLine ();
@@ -95,7 +113,7 @@ namespace DksgAnonymizer
 
 					if (row_count + 1 == batch_size) {
 						write_batch (tw, batch_index, batch);
-					
+
 						batch_index = new int[batch_size];
 						batch = new string[batch_size];
 					} 
@@ -107,6 +125,10 @@ namespace DksgAnonymizer
 					}
 
 					counter++;
+
+					if (counter > n_rows && line != null) {
+						throw new Exception("File has more lines than the maximum allowed 10M");
+					}
 				}
 			}
 		}
@@ -129,7 +151,7 @@ namespace DksgAnonymizer
 		{
 			int value;
 
-			key = key.Trim().ToLower();
+			key = key.Trim().ToLower(); // TODO add option to enable/disable trim and convert to lower case
 
 			if (!map.TryGetValue (key, out value)) {
 				value = rand_perm [index];
